@@ -427,7 +427,8 @@ app.post('/admin/adicionais/novo', (req, res) => db.run('INSERT INTO adicionais 
 app.delete('/admin/adicionais/:id', (req, res) => db.run('DELETE FROM adicionais WHERE id = ?', [req.params.id], () => res.json({ success: true })));
 
 const SERVER_PORT = process.env.PORT || 3000;
-app.listen(SERVER_PORT, () => {
+// O '0.0.0.0' é a chave para o Railway enxergar sua API
+app.listen(SERVER_PORT, '0.0.0.0', () => {
     console.log(`
     ========================================================================
     🚀 SOLUTIONS QR: SISTEMA DE INTELIGÊNCIA OPERACIONAL v7.6
