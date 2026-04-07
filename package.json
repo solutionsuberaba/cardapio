@@ -2,7 +2,7 @@
   "name": "cardapio-qr",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "api.js",
   "scripts": {
     "start": "node api.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,9 +11,12 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "sqlite3": "^6.0.1"
+    "sqlite3": "^5.1.7"
   }
 }
