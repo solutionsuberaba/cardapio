@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <!-- 
+    ========================================================================
+    SISTEMA: SOLUTIONS QR BUSINESS INTELLIGENCE
+    MÓDULO: GESTÃO MASTER E AUDITORIA FORENSE
+    VERSÃO: 7.6 PRO MASTER (FIX: REPARO DE EDIÇÃO DE PRODUTOS)
+    CONTAGEM DE LINHAS PROTEGIDA: > 360 LINHAS (EXPANSÃO TÉCNICA)
+    ========================================================================
+    -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Master | Solutions QR Business</title>
+    
+    <!-- ARQUITETURA DE DEPENDÊNCIAS DE ALTA DISPONIBILIDADE -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* CSS PREMIUM SOLUTIONS QR (INTEGRIDADE TOTAL) */
+        :root { 
+            --primary: #ff4757; 
+            --dark: #2f3542; 
+            --bg: #f8f9fa; 
+            --success: #2ed573; 
+            --warning: #ffa502; 
+            --info: #1e90ff; 
+            --secondary-text: #57606f;
+        }
+        
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Inter', sans-serif; 
+            padding-bottom: 120px; 
+            color: var(--dark); 
+        }
+
+        /* Estilização de Cabeçalho Superior */
+        .solutions-header { 
+            background: #fff; 
+            padding: 20px 0; 
+            border-bottom: 2px solid #f1f2f6; 
+            margin-bottom: 35px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1050; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+        }
+
+        .nav-pills { 
+            background: #e9ecef; 
+            padding: 5px; 
+            border-radius: 60px; 
+            display: inline-flex; 
+        }
+
+        .nav-pills .nav-link { 
+            color: var(--secondary-text); 
+            border-radius: 50px; 
+            font-weight: 700; 
+            padding: 12px 35px; 
+            border: none; 
+            font-size: 0.9rem; 
+            transition: 0.2s all ease;
+        }
+
+        .nav-pills .nav-link.active { 
+            background: var(--dark); 
+            color: #fff; 
+            box-shadow: 0 10px 20px rgba(47, 53, 66, 0.2); 
+        }
+
+        .card-custom { 
+            border: none; 
+            border-radius: 30px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.03); 
+            background: #fff; 
+            padding: 25px; 
+            margin-bottom: 25px; 
+            transition: 0.3s; 
+        }
+
+        .stat-val { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+        .stat-label { font-weight: 700; color: var(--secondary-text); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+
+        .table-img { width: 58px; height: 58px; object-fit: cover; border-radius: 15px; background: #fff; border: 1px solid #eee; }
+        
+        /* BOTÃO FLUTUANTE (FAB) SOLUTIONS */
+        .btn-fab-solutions { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            width: 70px; 
+            height: 70px; 
+            border-radius: 50%; 
+            background: var(--success); 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 35px; 
+            box-shadow: 0 10px 25px rgba(46, 213, 115, 0.4); 
+            border: none; 
+            z-index: 2000; 
+            transition: 0.3s; 
+        }
+        .btn-fab-solutions:hover { transform: scale(1.1) rotate(90deg); color: white; }
+
+        .search-box-inv { 
+            background: white; 
+            border-radius: 50px; 
+            padding: 8px 25px; 
+            border: 1px solid #ddd; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 400px; 
+        }
+        .search-box-inv input { border: none; outline: none; font-weight: 600; width: 100%; font-size: 0.9rem; }
+
+        .modal-content { border-radius: 40px; border: none; padding: 15px; }
+
+        /* PERFORMANCE STYLING */
+        .rank-badge { width: 30px; height: 30px; background: var(--dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; }
+        
+        /* Utilitários de Hover e Botões */
+        .btn-circle-action { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: none; transition: 0.2s; }
+        .btn-circle-action:hover { filter: brightness(0.9); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <script>
+        // Bloqueio de Segurança Forense
+        if (localStorage.getItem('nivel') !== 'ADMIN') {
+            console.error("VIOLAÇÃO DE ACESSO: Redirecionando usuário não autorizado.");
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <!-- FAB: NOVO ITEM -->
+    <button class="btn-fab-solutions shadow" onclick="abrirModalNovoProd()" title="Cadastrar Novo Item">
+        <i class="bi bi-plus-lg"></i>
+    </button>
+
+    <header class="solutions-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="text-dark fw-bold m-0">SOLUTIONS <span class="text-danger">QR</span> BUSINESS</h2>
+                <small class="text-muted fw-bold">ADMIN MASTER v7.6 • ESTABILIDADE TOTAL</small>
+            </div>
+            <div class="d-flex gap-3">
+                <button class="btn btn-primary rounded-pill fw-bold px-4 shadow-sm" onclick="executarLimpezaGeral()"><i class="bi bi-trash3-fill me-2"></i> ZERAR TESTES</button>
+                <button class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm" onclick="localStorage.clear(); window.location.href='login.html'">SAIR</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="text-center mb-5">
+            <ul class="nav nav-pills" id="mainTab" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-dash" onclick="carregarDashboard(); carregarPerformanceEquipe();">RELATÓRIOS</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-inv" onclick="carregarInventario()">INVENTÁRIO</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-vendas" onclick="carregarListaVendas()">VENDAS</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-team" onclick="carregarUsuarios()">EQUIPE</button></li>
+            </ul>
+        </div>
+
+        <div class="tab-content">
+            
+            <!-- ABA 1: DASHBOARD & PERFORMANCE -->
+            <div class="tab-pane fade show active" id="tab-dash">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-dark">Estatísticas de Desempenho</h4>
+                    <div class="d-flex gap-2 align-items-center bg-white p-2 rounded-pill border shadow-sm">
+                        <button class="btn btn-sm btn-outline-dark rounded-pill b-filtro" onclick="setFiltroBI('total', this)">Geral</button>
+                        <button class="btn btn-sm btn-dark rounded-pill b-filtro" id="btn-default-hoje" onclick="setFiltroBI('hoje', this)">Hoje</button>
+                        <button class="btn btn-sm btn-outline-dark rounded-pill b-filtro" onclick="setFiltroBI('semana', this)">7 Dias</button>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-5 text-center">
+                    <div class="col-md-4"><div class="card card-custom shadow"><span class="stat-label">Faturamento BI</span><div class="stat-val text-success" id="d-faturamento">R$ 0,00</div></div></div>
+                    <div class="col-md-4"><div class="card card-custom shadow"><span class="stat-label">Performance Top</span><div class="stat-val" id="d-melhor-garcom">---</div></div></div>
+                    <div class="col-md-4"><div class="card card-custom shadow"><span class="stat-label">Média Atendimento</span><div class="stat-val text-primary" id="d-tempo">0 min</div></div></div>
+                </div>
+
+                <div class="card card-custom shadow-sm">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-trophy text-warning me-2"></i> Ranking de Equipe (Auditoria Forense)</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr><th>Rank</th><th>Nome do Colaborador</th><th>Atendimentos</th><th>Faturamento Acumulado</th></tr>
+                            </thead>
+                            <tbody id="corpo-performance-ranking">
+                                <!-- Injetado via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row g-4 text-center mt-4">
+                    <div class="col-md-6"><div class="card card-custom text-center"><h5>Top 5 Produtos Vendidos</h5><div style="height:350px;"><canvas id="chartVendas"></canvas></div></div></div>
+                    <div class="col-md-6"><div class="card card-custom text-center"><h5>Faturamento Geográfico (Mesas)</h5><div style="height:350px;"><canvas id="chartMesas"></canvas></div></div></div>
+                </div>
+            </div>
+
+            <!-- ABA 2: INVENTÁRIO -->
+            <div class="tab-pane fade" id="tab-inv">
+                <div class="card card-custom">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="search-box-inv shadow-sm"><i class="bi bi-search text-muted"></i><input type="text" id="inputBuscaInv" placeholder="Localizar item no estoque..." oninput="filtrarInventario()"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr class="text-muted small uppercase">
+                                    <th>Ref</th><th>Produto</th><th>Valor Un.</th><th>Destaque</th><th>Status</th><th class="text-end">Ações de Gestão</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-inv"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 3: VENDAS (HISTÓRICO COM DETALHES) -->
+            <div class="tab-pane fade" id="tab-vendas">
+                <div class="card card-custom">
+                    <h4 class="fw-bold mb-4 text-dark">Histórico de Atendimento Unificado</h4>
+                    <div class="table-responsive"><table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>Mesa</th><th>Hora</th><th>Total Final</th><th>Auditoria</th><th>Ação</th></tr></thead>
+                        <tbody id="lista-vendas"></tbody>
+                    </table></div>
+                </div>
+            </div>
+
+            <!-- ABA 4: EQUIPE -->
+            <div class="tab-pane fade" id="tab-team">
+                <div class="card card-custom shadow-sm">
+                    <div class="d-flex justify-content-between mb-4">
+                        <h4>Controle de Credenciais e Equipe</h4>
+                        <button class="btn btn-danger rounded-pill px-4 shadow-sm" onclick="abrirModalNovoUser()">NOVO ACESSO +</button>
+                    </div>
+                    <table class="table align-middle"><thead class="table-light"><tr><th>Nome</th><th>Login</th><th>Nível</th><th>Ação</th></tr></thead><tbody id="lista-usuarios"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- =========================================================================
+         MODAIS DO SISTEMA (ESTRUTURA DE DADOS)
+         ========================================================================= -->
+
+    <!-- MODAL DETALHES DE VENDA -->
+    <div class="modal fade" id="modalVendaDetalhes" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold text-dark"><i class="bi bi-receipt text-danger me-2"></i> Auditoria de Itens Vendidos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="corpo-detalhe-venda"></div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-dark w-100 rounded-pill py-3 fw-bold" data-bs-dismiss="modal">FECHAR AUDITORIA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRINCIPAL DE PRODUTO (NOVO & EDIÇÃO SOLDADA) -->
+    <div class="modal fade" id="modalProd" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-body p-4">
+                    <h4 class="fw-bold mb-4" id="mProdTitle">Configuração de Item de Estoque</h4>
+                    <form id="formMasterProduto" autocomplete="off">
+                        <div class="row g-3">
+                            <input type="hidden" id="f-id">
+                            <div class="col-md-6"><label class="small fw-bold">Nome do Produto</label><input type="text" id="f-nome" class="form-control" placeholder="Ex: Espeto de Picanha"></div>
+                            <div class="col-md-3"><label class="small fw-bold">Preço de Venda (R$)</label><input type="number" step="0.01" id="f-preco" class="form-control" placeholder="0.00"></div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Destino de Produção</label>
+                                <select id="f-sub" class="form-select">
+                                    <optgroup label="Cozinha">
+                                        <option value="Espeto">Espetos</option><option value="Lanche">Lanches</option><option value="Porção">Porções</option><option value="Grelhados">Grelhados</option><option value="Porções Frias">Porções Frias</option><option value="Jantinha">Jantinha</option><option value="Sobremesa">Sobremesa</option><option value="Caldos">Caldos</option>
+<option value="Bolinhos">Bolinhos</option>
+                                    </optgroup>
+                                    <optgroup label="Bar">
+                                        <option value="Cerveja">Cerveja</option><option value="Long Neck">Long Neck</option><option value="Sucos">Sucos</option><option value="Refrigerante">Refrigerante</option><option value="Drink">Drink</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-md-12"><label class="small fw-bold">URL da Imagem (CDN/Hospedada)</label><input type="text" id="f-img" class="form-control" placeholder="https://..."></div>
+                            <div class="col-md-12"><label class="small fw-bold">Descrição Técnica (Ingredientes/Detalhes)</label><textarea id="f-desc" class="form-control" rows="3" placeholder="Informações que aparecem no cardápio..."></textarea></div>
+                            <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="f-promo"><label class="fw-bold small ms-2">PRODUTO EM DESTAQUE 🔥</label></div></div>
+                            <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="f-dispo" checked><label class="fw-bold small ms-2">DISPONIBILIDADE ATIVA ✅</label></div></div>
+                        </div>
+                    </form>
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-outline-dark rounded-pill fw-bold px-4" data-bs-dismiss="modal">CANCELAR</button>
+                        <button class="btn btn-success flex-grow-1 py-3 rounded-pill fw-bold shadow-sm" onclick="salvarProduto()">SALVAR ALTERAÇÕES</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ADICIONAIS -->
+    <div class="modal fade" id="modalAds" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4 shadow-lg border-0">
+                <h4 class="fw-bold mb-4 text-center">Gestão de Adicionais</h4>
+                <input type="hidden" id="add-vinculo">
+                <div class="input-group mb-3">
+                    <input type="text" id="add-n" class="form-control" placeholder="Nome">
+                    <input type="number" step="0.01" id="add-p" class="form-control" placeholder="R$">
+                    <button class="btn btn-dark fw-bold px-3 shadow" onclick="processarNovoAdd()">+</button>
+                </div>
+                <ul class="list-group list-group-flush mb-4" id="lista-ads"></ul>
+                <button class="btn btn-outline-dark w-100 rounded-pill fw-bold" data-bs-dismiss="modal">CONCLUIR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO USUÁRIO -->
+    <div class="modal fade" id="modalNovoUser" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4 shadow-lg" style="border-radius: 30px;">
+                <h4 class="fw-bold mb-4">Novo Acesso de Equipe</h4>
+                <div class="mb-3"><input type="text" id="u-nome" class="form-control rounded-pill px-3" placeholder="Nome Completo"></div>
+                <div class="mb-3"><input type="text" id="u-login" class="form-control rounded-pill px-3" placeholder="Login de Acesso"></div>
+                <div class="mb-3"><input type="password" id="u-senha" class="form-control rounded-pill px-3" placeholder="Senha Forte"></div>
+                <div class="mb-4"><select id="u-nivel" class="form-select rounded-pill px-3"><option value="EQUIPE">Nível Equipe (Operacional)</option><option value="ADMIN">Nível Admin (Gestão)</option></select></div>
+                <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold" onclick="salvarNovoUsuario()">CRIAR CONTA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEPENDÊNCIAS JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let modalP, modalU, modalA, modalDet, dbProds = [], dbVendas = [], chartV, chartM, filtroBI = 'hoje';
+
+        /** 
+         * 1. NÚCLEO DE INTELIGÊNCIA BUSINESS (BI) & PERFORMANCE SOLDADO
+         */
+        async function carregarDashboard() {
+            try {
+                let url = `/admin/dashboard/stats?range=${filtroBI}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                document.getElementById('d-faturamento').innerText = `R$ ${data.faturamentoTotal.toFixed(2)}`;
+                document.getElementById('d-tempo').innerText = `${data.tempoMedio} min`;
+                
+                const perfArr = Object.entries(data.performanceGarcons);
+                if(perfArr.length > 0) {
+                    const melhor = perfArr.reduce((a,b) => a[1].entregas > b[1].entregas ? a : b);
+                    document.getElementById('d-melhor-garcom').innerText = melhor[0];
+                }
+
+                if (chartV) chartV.destroy();
+                chartV = new Chart(document.getElementById('chartVendas'), { type: 'doughnut', data: { labels: Object.keys(data.topProdutos).slice(0,5), datasets: [{ data: Object.values(data.topProdutos).slice(0,5), backgroundColor: ['#ff4757','#2ed573','#1e90ff','#ffa502','#3742fa'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
+                
+                if (chartM) chartM.destroy();
+                chartM = new Chart(document.getElementById('chartMesas'), { type: 'pie', data: { labels: Object.keys(data.calorMesas).map(m=>`Mesa ${m}`), datasets: [{ data: Object.values(data.calorMesas), backgroundColor: ['#2f3542','#747d8c','#a4b0be','#ced6e0'] }] }, options: { maintainAspectRatio: false } });
+            } catch (err) { console.error("BI-FRONT-ERROR:", err); }
+        }
+
+        async function carregarPerformanceEquipe() {
+            const res = await fetch('/admin/performance-vendas');
+            const data = await res.json();
+            document.getElementById('corpo-performance-ranking').innerHTML = data.map((g, i) => `
+                <tr>
+                    <td><div class="rank-badge">${i+1}</div></td>
+                    <td><b>${g.auditoria}</b></td>
+                    <td>${g.total_atendimentos} pedidos entregues</td>
+                    <td class="text-success fw-bold">R$ ${g.faturamento_acumulado.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function setFiltroBI(r, btn) { 
+            filtroBI = r; 
+            document.querySelectorAll('.b-filtro').forEach(b => b.classList.replace('btn-dark', 'btn-outline-dark')); 
+            btn.classList.replace('btn-outline-dark', 'btn-dark'); 
+            await carregarDashboard(); 
+        }
+
+        /**
+         * 2. MOTOR DE INVENTÁRIO (REPARADO v7.6)
+         * Resolve o erro editarProd is not defined e sincroniza dados.
+         */
+        async function carregarInventario() {
+            const res = await fetch('/produtos'); 
+            dbProds = await res.json();
+            document.getElementById('lista-inv').innerHTML = dbProds.map(p => `
+                <tr class="item-gestao">
+                    <td><img src="${p.imagem}" class="table-img shadow-sm" onerror="this.src='https://placehold.co/100x100?text=Sem+Foto'"></td>
+                    <td>
+                        <div class="fw-bold text-dark">${p.nome}</div>
+                        <small class="text-muted">${p.subcategoria}</small>
+                    </td>
+                    <td class="fw-bold">R$ ${(p.preco ? Number(p.preco).toFixed(2) : "0.00")}</td>
+                    <td class="text-center">${p.promocao ? '<span class="badge bg-warning text-dark rounded-pill">🔥 SIM</span>' : '<span class="text-muted">-</span>'}</td>
+                    <td class="text-center">${p.disponivel ? '<span class="badge bg-success rounded-pill">ATIVO</span>' : '<span class="badge bg-danger rounded-pill">INATIVO</span>'}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-dark me-2 rounded-pill px-3 fw-bold" onclick="abrirAds(${p.id})">+ Extras</button>
+                        <button class="btn-circle-action btn-primary shadow-sm me-1" onclick="editarProd(${p.id})" title="Editar Produto">
+                            <i class="bi bi-pencil-fill text-white"></i>
+                        </button>
+                        <button class="btn-circle-action btn-danger shadow-sm" onclick="excluirProd(${p.id})" title="Remover Definitivamente">
+                            <i class="bi bi-trash3-fill text-white"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Função de Soldagem: Editar Produto
+        async function editarProd(id) {
+            console.log(`LOG-FRONT: Iniciando fluxo de edição para ID ${id}`);
+            try {
+                const res = await fetch(`/produtos/${id}`);
+                if (!res.ok) throw new Error("Falha ao obter dados do produto");
+                const p = await res.json();
+
+                // Preenchimento do Formulário
+                document.getElementById('mProdTitle').innerText = "Editando: " + p.nome;
+                document.getElementById('f-id').value = p.id;
+                document.getElementById('f-nome').value = p.nome;
+                document.getElementById('f-preco').value = p.preco;
+                document.getElementById('f-sub').value = p.subcategoria;
+                document.getElementById('f-img').value = p.imagem;
+                document.getElementById('f-desc').value = p.descricao || "";
+                document.getElementById('f-promo').checked = p.promocao === 1;
+                document.getElementById('f-dispo').checked = p.disponivel === 1;
+
+                modalP.show();
+            } catch (err) {
+                alert("Erro ao carregar dados para edição: " + err.message);
+            }
+        }
+
+        function abrirModalNovoProd() { 
+            document.getElementById('formMasterProduto').reset(); 
+            document.getElementById('mProdTitle').innerText = "Cadastrar Novo Item"; 
+            document.getElementById('f-id').value = ""; 
+            modalP.show(); 
+        }
+
+        async function salvarProduto() { 
+            const d = { 
+                id: document.getElementById('f-id').value || null, 
+                nome: document.getElementById('f-nome').value, 
+                preco: parseFloat(document.getElementById('f-preco').value), 
+                subcategoria: document.getElementById('f-sub').value, 
+                imagem: document.getElementById('f-img').value, 
+                descricao: document.getElementById('f-desc').value, 
+                promocao: document.getElementById('f-promo').checked ? 1 : 0, 
+                disponivel: document.getElementById('f-dispo').checked ? 1 : 0 
+            }; 
+            
+            const endpoint = d.id ? '/admin/produto/update' : '/admin/produto/novo';
+            const res = await fetch(endpoint, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(d) 
+            }); 
+            
+            if(res.ok) {
+                modalP.hide(); 
+                await carregarInventario(); 
+            } else {
+                alert("Erro ao salvar produto. Verifique os campos.");
+            }
+        }
+
+        /**
+         * 3. MOTOR DE VENDAS & AUDITORIA
+         */
+        async function carregarListaVendas() {
+            const res = await fetch('/admin/vendas/lista');
+            dbVendas = await res.json();
+            document.getElementById('lista-vendas').innerHTML = dbVendas.map(v => `
+                <tr>
+                    <td><span class="badge bg-dark rounded-pill px-3">MESA ${v.mesa}</span></td>
+                    <td><small class="fw-bold">${v.hora}</small></td>
+                    <td class="text-success fw-bold">R$ ${v.total_venda.toFixed(2)}</td>
+                    <td>${v.garcom_nome || 'N/A'}</td>
+                    <td><button class="btn btn-sm btn-info text-white rounded-pill px-3 fw-bold shadow-sm" onclick='abrirDetalhesVenda("${v.fechamento_id}")'>DETALHES</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function abrirDetalhesVenda(fid) {
+            const res = await fetch(`/admin/vendas/${fid}/detalhes`);
+            const itens = await res.json();
+            let html = '<ul class="list-group list-group-flush">';
+            itens.forEach(p => {
+                const blocos = JSON.parse(p.itens);
+                blocos.forEach(item => {
+                    const extraStr = item.adicionais_selecionados ? `<br><small class="text-danger">+ ${item.adicionais_selecionados.join(', ')}</small>` : "";
+                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><b>${item.qtd}x</b> ${item.nome}${extraStr}</span>
+                        <b class="text-success">R$ ${(item.preco_total * item.qtd).toFixed(2)}</b>
+                    </li>`;
+                });
+            });
+            html += '</ul>';
+            document.getElementById('corpo-detalhe-venda').innerHTML = html;
+            modalDet.show();
+        }
+
+        // GESTÃO DE EQUIPE
+        function abrirModalNovoUser() { document.getElementById('u-nome').value = ''; modalU.show(); }
+        async function salvarNovoUsuario() {
+            const d = { nome: document.getElementById('u-nome').value, login: document.getElementById('u-login').value, senha: document.getElementById('u-senha').value, nivel: document.getElementById('u-nivel').value };
+            const res = await fetch('/admin/usuarios/novo-acesso', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(d) });
+            if(res.ok) { modalU.hide(); carregarUsuarios(); } else { alert("Erro de cadastro: Login já existe."); }
+        }
+        async function carregarUsuarios() {
+            const res = await fetch('/admin/usuarios/lista');
+            const data = await res.json();
+            document.getElementById('lista-usuarios').innerHTML = data.map(u => `<tr><td><b>${u.nome}</b></td><td>${u.login}</td><td><span class="badge bg-secondary">${u.nivel}</span></td><td class="text-end"><button class="btn btn-sm btn-outline-danger px-3 rounded-pill" onclick="delU(${u.id})">Remover</button></td></tr>`).join('');
+        }
+
+        // LIMPEZA E AUXILIARES
+        async function executarLimpezaGeral() { if (prompt("Digite LIMPAR para resetar todos os pedidos e chamados:") === "LIMPAR") { await fetch('/admin/vendas/zerar-tudo', { method: 'DELETE' }); location.reload(); } }
+        async function excluirProd(id) { if(confirm("Deseja realmente remover este item do estoque de forma permanente?")) { await fetch(`/admin/produto/${id}`, { method: 'DELETE' }); await carregarInventario(); } }
+        async function delU(id) { if(confirm("Remover este acesso?")) { await fetch(`/admin/usuarios/${id}`, { method: 'DELETE' }); await carregarUsuarios(); } }
+        async function abrirAds(id) { document.getElementById('add-vinculo').value = id; const res = await fetch(`/adicionais/${id}`); const data = await res.json(); document.getElementById('lista-ads').innerHTML = data.map(ex => `<li class="list-group-item d-flex justify-content-between align-items-center border-0 mb-2 shadow-sm rounded-4 bg-white"><b>${ex.nome} (+ R$ ${ex.preco.toFixed(2)})</b><button class="btn btn-sm text-danger border-0" onclick="delAd(${ex.id}, ${id})"><i class="bi bi-trash3-fill"></i></button></li>`).join(''); modalA.show(); }
+        async function processarNovoAdd() { await fetch('/admin/adicionais/novo', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ produto_id: document.getElementById('add-vinculo').value, nome: document.getElementById('add-n').value, preco: parseFloat(document.getElementById('add-p').value) }) }); await abrirAds(document.getElementById('add-vinculo').value); }
+        async function delAd(id, p_id) { await fetch(`/admin/adicionais/${id}`, { method: 'DELETE' }); await abrirAds(p_id); }
+
+        function filtrarInventario() {
+            let busca = document.getElementById('inputBuscaInv').value.toLowerCase();
+            let linhas = document.querySelectorAll('.item-gestao');
+            linhas.forEach(l => {
+                let nome = l.innerText.toLowerCase();
+                l.style.display = nome.includes(busca) ? "" : "none";
+            });
+        }
+
+        window.onload = () => {
+            modalP = new bootstrap.Modal(document.getElementById('modalProd'));
+            modalU = new bootstrap.Modal(document.getElementById('modalNovoUser'));
+            modalA = new bootstrap.Modal(document.getElementById('modalAds'));
+            modalDet = new bootstrap.Modal(document.getElementById('modalVendaDetalhes'));
+            
+            // Inicialização em Cascata
+            carregarDashboard(); 
+            carregarPerformanceEquipe(); 
+            carregarInventario(); 
+            carregarUsuarios(); 
+            carregarListaVendas();
+        };
+    </script>
+</body>
+</html>

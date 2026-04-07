@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cozinha Solutions QR | KDS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #1e272e; color: white; padding: 20px; font-family: 'Inter', sans-serif; }
+        .card-p { background: white; color: black; border-radius: 20px; border-left: 10px solid #f1c40f; min-height: 250px; }
+        .PREPARANDO { border-left-color: #0984e3; background: #e3f2fd; }
+        .item-main { font-size: 22px; font-weight: 800; display: block; }
+        .extras-list { color: #ff4757; font-size: 17px; font-weight: 700; list-style: none; padding-left: 10px; margin-top: 5px; }
+        .extras-list li::before { content: "+ "; }
+    </style>
+</head>
+<body>
+    <script>if(!localStorage.getItem('nivel')) window.location.href = 'login.html';</script>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold m-0 text-white">Pedidos Cozinha 👨‍🍳</h1>
+        <button class="btn btn-outline-light rounded-pill px-4" onclick="localStorage.clear(); location.reload()">SAIR</button>
+    </div>
+
+    <div id="lista" class="row g-3"></div>
+
+    <script>
+        async function carregar() {
+            try {
+                const res = await fetch('/pedidos/cozinha');
+                const pedidos = await res.json();
+                const container = document.getElementById('lista');
+                
+                container.innerHTML = pedidos.map(p => {
+                    const itens = JSON.parse(p.itens);
+                    const htmlItens = itens.map(i => {
+                        const htmlExtras = i.adicionais_selecionados && i.adicionais_selecionados.length > 0 
+                            ? `<ul class="extras-list">${i.adicionais_selecionados.map(ex => `<li>${ex}</li>`).join('')}</ul>` : '';
+
+                        return `<li class="mb-3 border-bottom pb-2">
+                                    <span class="item-main">${i.qtd}x ${i.nome}</span>
+                                    ${htmlExtras}
+                                </li>`;
+                    }).join('');
+
+                    return `
+                    <div class="col-md-4">
+                        <div class="card card-p p-4 shadow-lg ${p.status}">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h2 class="fw-bold m-0 text-dark">MESA ${p.mesa}</h2>
+                                <span class="badge bg-dark">${p.hora}</span>
+                            </div>
+                            <hr>
+                            <ul class="list-unstyled">${htmlItens}</ul>
+                            <div class="mt-auto pt-3">
+                                ${p.status === 'PENDENTE' ? 
+                                    `<button class="btn btn-warning w-100 py-3 fw-bold fs-5 shadow" onclick="update(${p.id}, 'PREPARANDO')">INICIAR PREPARO</button>` :
+                                    `<button class="btn btn-success w-100 py-3 fw-bold fs-5 shadow" onclick="update(${p.id}, 'PRONTO')">CONCLUÍDO ✅</button>`
+                                }
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function update(id, s) { 
+            await fetch('/pedidos/status', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: s }) }); 
+            carregar(); 
+        }
+
+        setInterval(carregar, 4000); carregar();
+    </script>
+</body>
+</html>

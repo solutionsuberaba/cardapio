@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <!-- 
+    ========================================================================
+    SISTEMA: SOLUTIONS QR - GESTÃO DE FRENTE DE CAIXA
+    MÓDULO: TERMINAL DE FECHAMENTO E IMPRESSÃO TÉRMICA
+    VERSÃO: 2.6 MASTER (REPARO DE CÁLCULO E TAXA DEFAULT)
+    CONTAGEM DE LINHAS PROTEGIDA: > 230 LINHAS
+    ========================================================================
+    -->
+    <meta charset="UTF-8">
+    <title>Caixa Solutions | 80mm High Precision</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        /* ============================================================
+           CSS DE INTERFACE (VISUALIZAÇÃO EM TELA)
+           ============================================================ */
+        body { 
+            background: #f1f2f6; 
+            font-family: 'Inter', sans-serif; 
+            padding-bottom: 60px; 
+        }
+
+        .mesa-card { 
+            background: white; 
+            border-radius: 20px; 
+            border: none; 
+            cursor: pointer; 
+            transition: transform 0.3s ease; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .mesa-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1); 
+        }
+
+        .total-badge { 
+            background: #2ed573; 
+            color: white; 
+            padding: 8px 20px; 
+            border-radius: 50px; 
+            font-weight: 800; 
+            font-size: 1.1rem;
+        }
+
+        /* Correção de Layout para evitar cortes */
+        .totais-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            border: 1px solid #eee;
+        }
+
+        .form-switch .form-check-input { 
+            width: 3.5em; 
+            height: 1.8em; 
+            cursor: pointer; 
+        }
+
+        /* ============================================================
+           CSS DE IMPRESSÃO (CUPOM TÉRMICO 80MM)
+           ============================================================ */
+        @media print {
+            body * { display: none !important; }
+            #area-impressao, #area-impressao * { display: block !important; visibility: visible !important; }
+            
+            #area-impressao {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 80mm !important;
+                padding: 0;
+                margin: 0;
+                color: #000;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 12px;
+            }
+
+            table { width: 100% !important; border-collapse: collapse; margin-top: 5px; }
+            th { border-bottom: 1px dashed #000; text-align: left; padding: 5px 0; }
+            td { padding: 3px 0; }
+            .txt-center { text-align: center; }
+            .txt-right { text-align: right; }
+            .sep { border-top: 1px dashed #000; margin: 8px 0; }
+            .bold { font-weight: bold; }
+            
+            @page { margin: 0; size: auto; } 
+        }
+
+        #area-impressao { display: none; }
+    </style>
+</head>
+<body class="container py-4">
+
+    <!-- CABEÇALHO DO CAIXA -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0 text-dark">💰 Painel de Caixa</h2>
+            <p class="text-muted small m-0">Solutions QR - Controle de Recebimentos</p>
+        </div>
+        <button class="btn btn-dark rounded-pill px-4 fw-bold" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> ATUALIZAR
+        </button>
+    </div>
+
+    <!-- GRID DINÂMICO DE MESAS OCUPADAS -->
+    <div id="grid-mesas" class="row g-3">
+        <!-- Injetado via JavaScript carregarCaixa() -->
+    </div>
+
+    <!-- MODAL DE FECHAMENTO (AUDITORIA E PAGAMENTO) -->
+    <div class="modal fade" id="modalComanda" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h4 class="fw-bold" id="titleMesa">Detalhamento da Mesa</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tabela de Itens Consumidos -->
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Consumido</th>
+                                    <th class="text-center">Qtd</th>
+                                    <th class="text-end">Subtotal</th>
+                                    <th class="text-end text-muted small">Entregador</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-comanda">
+                                <!-- Injetado via verMesa() -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Configuração de Taxa de Serviço (REQUISITO: DEFAULT ON) -->
+                    <div class="bg-white border p-3 rounded-4 d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold m-0 text-primary">Taxa de Serviço (10%)</h6>
+                            <small class="text-muted">Abonar apenas se o cliente solicitar.</small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="switchDez" onchange="calcularTotalFinal()" checked>
+                        </div>
+                    </div>
+
+                    <!-- SELEÇÃO DA FORMA DE PAGAMENTO (REQUISITO NOVO) -->
+                    <div class="mb-3">
+                        <label class="fw-bold small mb-2 ms-2 text-uppercase">Forma de Pagamento:</label>
+                        <select id="forma-pagamento" class="form-select form-select-lg rounded-4 border-2">
+                            <option value="Pix">Pix 📱</option>
+                            <option value="Crédito">Cartão de Crédito 💳</option>
+                            <option value="Débito">Cartão de Débito 💳</option>
+                            <option value="Dinheiro">Dinheiro (Espécie) 💵</option>
+                        </select>
+                    </div>
+
+                    <!-- ÁREA DE TOTAIS (CORRIGIDO PARA NÃO CORTAR) -->
+                    <div class="totais-container text-end">
+                        <div class="d-flex justify-content-end gap-5 mb-2 border-bottom pb-2">
+                            <span class="text-muted">Consumo Base:</span>
+                            <span class="fw-bold" id="valConsumo">R$ 0,00</span>
+                        </div>
+                        <div class="d-flex justify-content-end gap-5 mb-3" id="area-taxa-label">
+                            <span class="text-muted">Taxa Garçom (10%):</span>
+                            <span class="fw-bold" id="valTaxaServico">R$ 0,00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="fw-bold m-0 text-dark">TOTAL FINAL:</h2>
+                            <h1 class="fw-bold text-success m-0" id="valTotalGeral">R$ 0,00</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4">
+                    <button class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm fs-5" onclick="imprimirCupom80mm()">
+                        <i class="bi bi-printer-fill me-2"></i> IMPRIMIR CUPOM
+                    </button>
+                    <button class="btn btn-outline-danger fw-bold rounded-pill px-4" onclick="fecharEResetarMesa()">
+                        FECHAR/LIMPAR MESA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESTRUTURA DO CUPOM TÉRMICO (INVISÍVEL EM TELA) -->
+    <div id="area-impressao">
+        <div class="txt-center">
+            <h2 style="margin:0;">SOLUTIONS GASTRONOMIA</h2>
+            <p>SISTEMA DE AUTOATENDIMENTO</p>
+            <div class="sep"></div>
+            <p class="bold" id="p-mesa" style="font-size: 18px;">MESA XX</p>
+            <p id="p-data"></p>
+        </div>
+        <div class="sep"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th align="left">UN</th>
+                    <th align="left">DESCRIÇÃO</th>
+                    <th align="right">VALOR</th>
+                </tr>
+            </thead>
+            <tbody id="p-itens-body"></tbody>
+        </table>
+        <div class="sep"></div>
+        <div class="txt-right">
+            <p>CONSUMO: <span id="p-consumo">0,00</span></p>
+            <p id="p-linha-taxa">TAXA (10%): <span id="p-taxa">0,00</span></p>
+            <h3 style="margin-top:5px;">TOTAL: <span id="p-total">0,00</span></h3>
+            <p class="bold">PAGAMENTO: <span id="p-metodo">---</span></p>
+        </div>
+        <div class="sep"></div>
+        <p id="p-atendentes" style="font-size: 10px;"></p>
+        <div class="sep"></div>
+        <div class="txt-center">
+            <p class="bold">OBRIGADO PELA PREFERÊNCIA!</p>
+            <p>Solutions QR Business</p>
+            <br><br><br>
+        </div>
+    </div>
+
+    <!-- LÓGICA DE PROGRAMAÇÃO MASTER -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let pedidosOcupados = [];
+        let mesaSelecionada = "";
+        let baseFinanceira = 0;
+        let instanciaModal;
+
+        /**
+         * 1. CARREGAR MESAS ATIVAS
+         */
+        async function carregarCaixa() {
+            try {
+                const response = await fetch('/caixa/mesas');
+                pedidosOcupados = await response.json();
+                instanciaModal = new bootstrap.Modal(document.getElementById('modalComanda'));
+
+                // Extrair mesas únicas do array de pedidos
+                const mesasAtivas = [...new Set(pedidosOcupados.map(p => p.mesa))];
+                const container = document.getElementById('grid-mesas');
+                
+                if (mesasAtivas.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center mt-5"><h4 class="text-muted">Nenhuma mesa aberta no momento.</h4></div>';
+                    return;
+                }
+
+                container.innerHTML = mesasAtivas.map(m => {
+                    const somaMesa = pedidosOcupados.filter(p => p.mesa === m).reduce((acc, p) => acc + p.total, 0);
+                    return `
+                    <div class="col-md-3">
+                        <div class="card mesa-card p-4 text-center" onclick="abrirDetalhesMesa('${m}')">
+                            <h3 class="fw-bold text-dark m-0">MESA ${m}</h3>
+                            <div class="mt-3"><span class="total-badge shadow-sm">R$ ${somaMesa.toFixed(2)}</span></div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) { console.error("Erro ao sincronizar caixa:", err); }
+        }
+
+        /**
+         * 2. ABRIR DETALHES E CORRIGIR NaN
+         */
+        function abrirDetalhesMesa(m) {
+            mesaSelecionada = m;
+            document.getElementById('titleMesa').innerText = "Comanda Aberta - MESA " + m;
+            const filtrados = pedidosOcupados.filter(p => p.mesa === m);
+            baseFinanceira = 0;
+
+            document.getElementById('lista-comanda').innerHTML = filtrados.map(p => {
+                baseFinanceira += p.total;
+                const itensInternos = JSON.parse(p.itens);
+                
+                return itensInternos.map(i => {
+                    // CORREÇÃO TÉCNICA: Usa preco_total (com adicionais) ou preco base
+                    const precoCalculo = i.preco_total || i.preco || 0;
+                    const subtotalItem = precoCalculo * i.qtd;
+
+                    return `
+                    <tr>
+                        <td class="fw-bold">${i.nome}</td>
+                        <td class="text-center">${i.qtd}x</td>
+                        <td class="text-end fw-bold text-success">R$ ${subtotalItem.toFixed(2)}</td>
+                        <td class="text-end"><small class="text-muted">${p.garcom_nome || 'Bar'}</small></td>
+                    </tr>`;
+                }).join('');
+            }).join('');
+
+            // REQUISITO: Taxa de 10% inicia SEMPRE ligada
+            document.getElementById('switchDez').checked = true;
+            calcularTotalFinal();
+            instanciaModal.show();
+        }
+
+        /**
+         * 3. CÁLCULO DINÂMICO DE TOTAIS
+         */
+        function calcularTotalFinal() {
+            const aplicarTaxa = document.getElementById('switchDez').checked;
+            const taxaCalculada = aplicarTaxa ? (baseFinanceira * 0.10) : 0;
+            const liquidoFinal = baseFinanceira + taxaCalculada;
+
+            document.getElementById('valConsumo').innerText = `R$ ${baseFinanceira.toFixed(2)}`;
+            document.getElementById('valTaxaServico').innerText = `R$ ${taxaCalculada.toFixed(2)}`;
+            document.getElementById('valTotalGeral').innerText = `R$ ${liquidoFinal.toFixed(2)}`;
+            
+            document.getElementById('area-taxa-label').style.opacity = aplicarTaxa ? '1' : '0.3';
+        }
+
+        /**
+         * 4. IMPRESSÃO 80MM PROFISSIONAL
+         */
+        function imprimirCupom80mm() {
+            const pedidosMesa = pedidosOcupados.filter(p => p.mesa === mesaSelecionada);
+            const taxa = document.getElementById('switchDez').checked ? (baseFinanceira * 0.10) : 0;
+            const metodo = document.getElementById('forma-pagamento').value;
+            let atendentesSet = new Set();
+
+            document.getElementById('p-mesa').innerText = "MESA " + mesaSelecionada;
+            document.getElementById('p-data').innerText = new Date().toLocaleString();
+            document.getElementById('p-metodo').innerText = metodo;
+
+            const itensHtml = pedidosMesa.map(p => {
+                if (p.garcom_nome) atendentesSet.add(p.garcom_nome);
+                return JSON.parse(p.itens).map(i => {
+                    const valorItem = i.preco_total || i.preco || 0;
+                    return `
+                    <tr>
+                        <td>${i.qtd}x</td>
+                        <td>${i.nome.toUpperCase()}</td>
+                        <td align="right">${(valorItem * i.qtd).toFixed(2)}</td>
+                    </tr>`;
+                }).join('');
+            }).join('');
+
+            document.getElementById('p-itens-body').innerHTML = itensHtml;
+            document.getElementById('p-consumo').innerText = baseFinanceira.toFixed(2);
+            document.getElementById('p-taxa').innerText = taxa.toFixed(2);
+            document.getElementById('p-total').innerText = (baseFinanceira + taxa).toFixed(2);
+            document.getElementById('p-linha-taxa').style.display = taxa > 0 ? 'block' : 'none';
+            
+            const atendentesStr = Array.from(atendentesSet).length > 0 ? "Equipe: " + Array.from(atendentesSet).join(', ') : "Solutions QR System";
+            document.getElementById('p-atendentes').innerText = atendentesStr;
+
+            window.print();
+        }
+
+        /**
+         * 5. FECHAMENTO DE MESA NO BANCO
+         */
+        async function fecharEResetarMesa() {
+            const metodo = document.getElementById('forma-pagamento').value;
+            if(confirm(`Confirmar pagamento via ${metodo} e liberar a Mesa ${mesaSelecionada}?`)) {
+                try {
+                    await fetch('/caixa/reset', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ mesa: mesaSelecionada, pagamento: metodo })
+                    });
+                    instanciaModal.hide();
+                    carregarCaixa();
+                } catch (e) { alert("Erro ao fechar mesa."); }
+            }
+        }
+
+        // Loop de atualização do painel
+        setInterval(carregarCaixa, 5000);
+        carregarCaixa();
+    </script>
+</body>
+</html>

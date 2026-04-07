@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Equipe | Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container py-4 bg-light">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Gestão de Equipe 👥</h2>
+        <button class="btn btn-dark rounded-pill" onclick="abrirNovo()">Novo Funcionário +</button>
+    </div>
+
+    <div class="card border-0 shadow-sm p-3" style="border-radius: 20px;">
+        <table class="table align-middle">
+            <thead><tr><th>Nome</th><th>Login</th><th>Cargo</th><th>Ações</th></tr></thead>
+            <tbody id="lista-equipe"></tbody>
+        </table>
+    </div>
+
+    <!-- MODAL NOVO USUÁRIO -->
+    <div class="modal fade" id="modalUser" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4" style="border-radius: 25px;">
+                <h4 class="fw-bold">Cadastrar Equipe</h4>
+                <div class="mb-2"><label class="small fw-bold">Nome Completo</label><input type="text" id="u-nome" class="form-control"></div>
+                <div class="mb-2"><label class="small fw-bold">Login de Acesso</label><input type="text" id="u-login" class="form-control"></div>
+                <div class="mb-2"><label class="small fw-bold">Senha Inicial</label><input type="password" id="u-senha" class="form-control"></div>
+                <div class="mb-3"><label class="small fw-bold">Nível de Acesso</label>
+                    <select id="u-nivel" class="form-select">
+                        <option value="FUNCIONARIO">Funcionário (Garçom/Cozinha)</option>
+                        <option value="ADMIN">Administrador (Dono)</option>
+                    </select>
+                </div>
+                <button class="btn btn-success w-100 py-3 rounded-pill fw-bold" onclick="salvarUser()">CRIAR ACESSO</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        if(localStorage.getItem('nivel') !== 'ADMIN') window.location.href = 'login.html';
+
+        async function carregar() {
+            const res = await fetch('/admin/usuarios/lista');
+            const data = await res.json();
+            document.getElementById('lista-equipe').innerHTML = data.map(u => `
+                <tr>
+                    <td><b>${u.nome}</b></td>
+                    <td>${u.login}</td>
+                    <td><span class="badge bg-info text-dark">${u.nivel}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluir(${u.id})">Remover</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        const modalUser = new bootstrap.Modal(document.getElementById('modalUser'));
+        function abrirNovo() { modalUser.show(); }
+
+        async function salvarUser() {
+            const dados = {
+                nome: document.getElementById('u-nome').value,
+                login: document.getElementById('u-login').value,
+                senha: document.getElementById('u-senha').value,
+                nivel: document.getElementById('u-nivel').value
+            };
+            await fetch('/admin/usuarios/novo', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados) });
+            modalUser.hide(); carregar();
+        }
+
+        async function excluir(id) {
+            if(confirm("Remover acesso deste funcionário?")) {
+                await fetch(`/admin/usuarios/${id}`, { method: 'DELETE' });
+                carregar();
+            }
+        }
+        carregar();
+    </script>
+</body>
+</html>
