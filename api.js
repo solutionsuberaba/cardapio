@@ -24,7 +24,7 @@ const app = express();
 // =========================================================================
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Estabelecendo Conexão com o Banco de Dados Central Solutions QR
 const db = new sqlite3.Database(process.env.DB_PATH || path.join(__dirname, 'database.db'), (err) => {
