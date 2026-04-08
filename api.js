@@ -27,7 +27,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Estabelecendo Conexão com o Banco de Dados Central Solutions QR
-const db = new sqlite3.Database(process.env.DB_PATH || path.join(__dirname, 'database.db'), (err) => {
+const db = new sqlite3.Database(process.env.DB_PATH || path.join(__dirname, 'database'), (err) => {
     if (err) {
         console.error("CRÍTICO: Falha na conexão com o banco de dados:", err.message);
     } else {
